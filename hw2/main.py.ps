@@ -1,0 +1,1156 @@
+%!PS-Adobe-3.0
+%%Title: main.py
+%%For: Unknown User
+%%Creator: a2ps version 4.14
+%%CreationDate: Thu Sep 15 01:35:53 2022
+%%BoundingBox: 24 24 571 818
+%%DocumentData: Clean7Bit
+%%Orientation: Landscape
+%%Pages: 2
+%%PageOrder: Ascend
+%%DocumentMedia: A4 595 842 0 () ()
+%%DocumentNeededResources: font Courier
+%%+ font Courier-Bold
+%%+ font Courier-BoldOblique
+%%+ font Courier-Oblique
+%%+ font Helvetica
+%%+ font Helvetica-Bold
+%%+ font Symbol
+%%+ font Times-Bold
+%%+ font Times-Roman
+%%DocumentProcessColors: Black 
+%%DocumentSuppliedResources: procset a2ps-a2ps-hdr
+%%+ procset a2ps-black+white-Prolog
+%%+ encoding ISO-8859-1Encoding
+%%EndComments
+/a2psdict 200 dict def
+a2psdict begin
+%%BeginProlog
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+
+% EPSF import as in the Red Book
+/BeginInclude {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack 
+  userdict begin
+    0 setgray 0 setlinecap
+    1 setlinewidth 0 setlinejoin
+    10 setmiterlimit [ ] 0 setdash newpath
+    gs_languagelevel 1 ne {
+      false setstrokeadjust false setoverprint 
+    } if
+} bind def
+
+/EndInclude {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+/BeginEPSF {
+  BeginInclude
+  /showpage { } def
+} bind def
+
+/EndEPSF {
+  EndInclude
+} bind def
+
+% Page prefeed
+/page_prefeed {         % bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} bind def
+
+/deffont {
+  findfont exch scalefont def
+} bind def
+
+/reencode_font {
+  findfont reencode 2 copy definefont pop def
+} bind def
+
+% Function c-show (str => -)
+% centers text only according to x axis.
+/c-show { 
+  dup stringwidth pop
+  2 div neg 0 rmoveto
+  show
+} bind def
+
+% Function l-show (str => -)
+% prints texts so that it ends at currentpoint
+/l-show {
+  dup stringwidth pop neg 
+  0 
+  rmoveto show
+} bind def
+
+% center-fit show (str w => -)
+% show centered, and scale currentfont so that the width is less than w
+/cfshow {
+  exch dup stringwidth pop
+  % If the title is too big, try to make it smaller
+  3 2 roll 2 copy
+  gt
+  { % if, i.e. too big
+    exch div
+    currentfont exch scalefont setfont
+  } { % ifelse
+    pop pop 
+  }
+  ifelse
+  c-show			% center title
+} bind def
+
+% Return the y size of the current font
+% - => fontsize
+/currentfontsize {
+  currentfont /FontType get 0 eq {
+    currentfont /FontMatrix get 3 get
+  }{
+    currentfont /FontMatrix get 3 get 1000 mul
+  } ifelse
+} bind def
+
+% reencode the font
+% <encoding-vector> <fontdict> -> <newfontdict>
+/reencode { %def
+  dup length 5 add dict begin
+    { %forall
+      % <vector> <key> <val>
+      1 index /FID ne 
+      { def }{ pop pop } ifelse
+    } forall
+    /Encoding exch def % -
+
+    % Use the font's bounding box to determine the ascent, descent,
+    % and overall height; don't forget that these values have to be
+    % transformed using the font's matrix.
+    % We use `load' because sometimes BBox is executable, sometimes not.
+    % Since we need 4 numbers an not an array avoid BBox from being executed
+    /FontBBox load aload pop
+    FontMatrix transform /Ascent exch def pop
+    FontMatrix transform /Descent exch def pop
+    /FontHeight Ascent Descent sub def
+
+    % Get the underline position and thickness if they're defined.
+    % Use 1 if they are not defined.
+    currentdict /FontInfo 2 copy known
+    { get
+      /UnderlinePosition 2 copy % <FontInfo> /UP <FontInfo> /UP
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+
+      /UnderlineThickness 2 copy % <FontInfo> /UT <FontInfo> /UT
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+      pop % -
+    }{ pop pop
+    } ifelse
+
+    currentdict
+  end 
+} bind def
+
+% composite fonts for ASCII-EUC mixed strings
+% Version 1.2 1/31/1990
+% Original Ken'ichi HANDA (handa@etl.go.jp)
+% Modified Norio Katayama (katayama@rd.nacsis.ac.jp),1998
+% Extend & Fix Koji Nakamaru (maru@on.cs.keio.ac.jp), 1999
+% Anyone can freely copy, modify, distribute this program.
+
+/copyfont {	% font-dic extra-entry-count  copyfont  font-dic
+	1 index maxlength add dict begin
+	{	1 index /FID ne 2 index /UniqueID ne and
+		{def} {pop pop} ifelse
+	} forall
+	currentdict
+	end
+} bind def
+
+/compositefont { % ASCIIFontName EUCFontName RomanScale RomanOffset Rot(T/F) compositefont font
+    /RomanRotation exch def
+    /RomanOffset exch def
+    /RomanScale exch def
+    userdict /fixeucfont_dict known not {
+	userdict begin
+	    /fixeucfont_dict 2 dict begin
+		/UpperByteEncoding [
+		    16#00 1 16#20 { pop 0 } for
+		    16#21 1 16#28 { 16#20 sub } for
+		    16#29 1 16#2F { pop 0 } for
+		    16#30 1 16#74 { 16#27 sub } for
+		    16#75 1 16#FF { pop 0 } for
+		] def
+	        /LowerByteEncoding [
+		    16#00 1 16#A0 { pop /.notdef } for
+		    16#A1 1 16#FE { 16#80 sub 16 2 string cvrs
+				    (cXX) dup 1 4 -1 roll
+				    putinterval cvn } for
+		    /.notdef
+		] def
+		currentdict
+	    end def
+	end
+    } if
+    findfont dup /FontType get 0 eq {
+	14 dict begin
+	    %
+	    % 7+8 bit EUC font
+	    %
+	    12 dict begin
+		/EUCFont exch def
+		/FontInfo (7+8 bit EUC font) readonly def
+		/PaintType 0 def
+		/FontType 0 def
+		/FontMatrix matrix def
+		% /FontName
+		/Encoding fixeucfont_dict /UpperByteEncoding get def
+		/FMapType 2 def
+		EUCFont /WMode known
+		{ EUCFont /WMode get /WMode exch def }
+		{ /WMode 0 def } ifelse
+		/FDepVector [
+		    EUCFont /FDepVector get 0 get
+		    [ 16#21 1 16#28 {} for 16#30 1 16#74 {} for ]
+		    {
+			13 dict begin
+			    /EUCFont EUCFont def
+			    /UpperByte exch 16#80 add def	
+			    % /FontName
+			    /FontInfo (EUC lower byte font) readonly def
+			    /PaintType 0 def
+			    /FontType 3 def
+			    /FontMatrix matrix def
+			    /FontBBox {0 0 0 0} def
+			    /Encoding
+				fixeucfont_dict /LowerByteEncoding get def
+			    % /UniqueID
+			    % /WMode
+			    /BuildChar {
+				gsave
+				exch dup /EUCFont get setfont
+				/UpperByte get
+				2 string
+				dup 0 4 -1 roll put
+				dup 1 4 -1 roll put
+				dup stringwidth setcharwidth
+				0 0 moveto show
+				grestore
+			    } bind def
+			    currentdict
+			end
+			/lowerbytefont exch definefont
+		    } forall
+		] def
+		currentdict
+	    end
+	    /eucfont exch definefont
+	    exch
+	    findfont 1 copyfont dup begin
+		RomanRotation {
+			/FontMatrix FontMatrix
+			[ 0 RomanScale neg RomanScale 0 RomanOffset neg 0 ]
+			matrix concatmatrix def
+		}{
+			/FontMatrix FontMatrix
+			[ RomanScale 0 0 RomanScale 0 RomanOffset ] matrix concatmatrix
+			def
+			/CDevProc
+			    {pop pop pop pop 0 exch -1000 exch 2 div 880} def
+		} ifelse
+	    end
+	    /asciifont exch definefont
+	    exch
+	    /FDepVector [ 4 2 roll ] def
+	    /FontType 0 def
+	    /WMode 0 def
+	    /FMapType 4 def
+	    /FontMatrix matrix def
+	    /Encoding [0 1] def
+	    /FontBBox {0 0 0 0} def
+%	    /FontHeight 1.0 def % XXXX
+	    /FontHeight RomanScale 1.0 ge { RomanScale }{ 1.0 } ifelse def
+	    /Descent -0.3 def   % XXXX
+	    currentdict
+	end
+	/tmpfont exch definefont
+	pop
+	/tmpfont findfont
+    }{
+	pop findfont 0 copyfont
+    } ifelse
+} def	
+
+/slantfont {	% FontName slant-degree  slantfont  font'
+    exch findfont 1 copyfont begin
+    [ 1 0 4 -1 roll 1 0 0 ] FontMatrix exch matrix concatmatrix
+    /FontMatrix exch def
+    currentdict
+    end
+} def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul neg 2 div 0 rmoveto
+    f# setfont
+    c-show
+  grestore
+} bind def
+
+% -------- Some routines to enlight plain b/w printings ---------
+
+% Underline
+% width --
+/dounderline {
+  currentpoint
+  gsave
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    0 rlineto
+    stroke
+  grestore
+} bind def
+
+% Underline a string
+% string --
+/dounderlinestring {
+  stringwidth pop
+  dounderline
+} bind def
+
+/UL {
+  /ul exch store
+} bind def
+
+% Draw a box of WIDTH wrt current font
+% width --
+/dobox {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    stroke
+  grestore
+} bind def
+
+/BX {
+  /bx exch store
+} bind def
+
+% Box a string
+% string --
+/doboxstring {
+  stringwidth pop
+  dobox
+} bind def
+
+%
+% ------------- Color routines ---------------
+%
+/FG /setrgbcolor load def
+
+% Draw the background
+% width --
+/dobackground {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    bgcolor aload pop setrgbcolor
+    fill
+  grestore
+} bind def
+
+% Draw bg for a string
+% string --
+/dobackgroundstring {
+  stringwidth pop
+  dobackground
+} bind def
+
+
+/BG {
+  dup /bg exch store
+  { mark 4 1 roll ] /bgcolor exch store } if
+} bind def
+
+
+/Show {
+  bg { dup dobackgroundstring } if
+  ul { dup dounderlinestring } if
+  bx { dup doboxstring } if
+  show
+} bind def
+
+% Function T(ab), jumps to the n-th tabulation in the current line
+/T {
+  cw mul x0 add
+  bg { dup currentpoint pop sub dobackground } if
+  ul { dup currentpoint pop sub dounderline } if
+  bx { dup currentpoint pop sub dobox } if
+  y0 moveto
+} bind def
+
+% Function n: move to the next line
+/n {
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+% Function N: show and move to the next line
+/N {
+  Show
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+/S {
+  Show
+} bind def
+
+%%BeginResource: procset a2ps-a2ps-hdr 2.0 2
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Function title: prints page header.
+% <ct> <rt> <lt> are passed as argument
+/title { 
+  % 1. Draw the background
+  x v get y v get moveto
+  gsave
+    0 th 2 div neg rmoveto 
+    th setlinewidth
+    0.95 setgray
+    pw 0 rlineto stroke
+  grestore
+  % 2. Border it
+  gsave
+    0.7 setlinewidth
+    pw 0 rlineto
+    0 th neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+  % stk: ct rt lt
+  x v get y v get th sub 1 add moveto
+%%IncludeResource: font Helvetica
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  % 3. The left title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    fnfs 0.8 mul hm rmoveto
+    show			% left title
+  grestore
+  exch
+  % stk: ct ltw rt
+  % 4. the right title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    dup
+    pw exch stringwidth pop fnfs 0.8 mul add sub
+    hm
+    rmoveto
+    show			% right title
+  grestore
+  % stk: ct ltw rtw
+  % 5. the center title
+  gsave
+    pw 3 1 roll
+    % stk: ct pw ltw rtw
+    3 copy 
+    % Move to the center of the left room
+    sub add 2 div hm rmoveto
+    % What is the available space in here?
+    add sub fnfs 0.8 mul sub fnfs 0.8 mul sub
+    % stk: ct space_left
+%%IncludeResource: font Helvetica-Bold
+  fHelvetica-Bold fnfs scalefont setfont
+    cfshow
+  grestore
+} bind def
+
+% Function border: prints virtual page border
+/border { %def
+  gsave				% print four sides
+    0 setgray
+    x v get y v get moveto
+    0.7 setlinewidth		% of the square
+    pw 0 rlineto
+    0 ph neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+} bind def
+
+% Function water: prints a water mark in background
+/water { %def
+  gsave
+    scx scy moveto rotate
+%%IncludeResource: font Times-Bold
+  fTimes-Bold 100 scalefont setfont
+    .97 setgray
+    dup stringwidth pop 2 div neg -50 rmoveto
+    show
+  grestore
+} bind def
+
+% Function rhead: prints the right header
+/rhead {  %def
+  lx ly moveto
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  l-show
+} bind def
+
+% Function footer (cf rf lf -> -)
+/footer {
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  dx dy moveto
+  show
+
+  snx sny moveto
+  l-show
+  
+  fnx fny moveto
+  c-show
+} bind def
+%%EndResource
+%%BeginResource: procset a2ps-black+white-Prolog 2.0 1
+
+% Function T(ab), jumps to the n-th tabulation in the current line
+/T { 
+  cw mul x0 add y0 moveto
+} bind def
+
+% Function n: move to the next line
+/n { %def
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+% Function N: show and move to the next line
+/N {
+  Show
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+}  bind def
+
+/S {
+  Show
+} bind def
+
+/p {
+  false UL
+  false BX
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/sy {
+  false UL
+  false BX
+  fSymbol bfs scalefont setfont
+  Show
+} bind def
+
+/k {
+  false UL
+  false BX
+  fCourier-Oblique bfs scalefont setfont
+  Show
+} bind def
+
+/K {
+  false UL
+  false BX
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/c {
+  false UL
+  false BX
+  fCourier-Oblique bfs scalefont setfont
+  Show
+} bind def
+
+/C {
+  false UL
+  false BX
+  fCourier-BoldOblique bfs scalefont setfont
+  Show 
+} bind def
+
+/l {
+  false UL
+  false BX
+  fHelvetica bfs scalefont setfont
+  Show
+} bind def
+
+/L {
+  false UL
+  false BX
+  fHelvetica-Bold bfs scalefont setfont
+  Show 
+} bind def
+
+/str{
+  false UL
+  false BX
+  fTimes-Roman bfs scalefont setfont
+  Show
+} bind def
+
+/e{
+  false UL
+  true BX
+  fHelvetica-Bold bfs scalefont setfont
+  Show
+} bind def
+
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier
+%%IncludeResource: font Courier-Oblique
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Symbol
+%%IncludeResource: font Courier-BoldOblique
+%%BeginResource: encoding ISO-8859-1Encoding
+/ISO-8859-1Encoding [
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright 
+/parenleft /parenright /asterisk /plus /comma /minus /period /slash 
+/zero /one /two /three /four /five /six /seven 
+/eight /nine /colon /semicolon /less /equal /greater /question 
+/at /A /B /C /D /E /F /G 
+/H /I /J /K /L /M /N /O 
+/P /Q /R /S /T /U /V /W 
+/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore 
+/quoteleft /a /b /c /d /e /f /g 
+/h /i /j /k /l /m /n /o 
+/p /q /r /s /t /u /v /w 
+/x /y /z /braceleft /bar /braceright /asciitilde /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclamdown /cent /sterling /currency /yen /brokenbar /section 
+/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron 
+/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /bullet 
+/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown 
+/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla 
+/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis 
+/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply 
+/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls 
+/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla 
+/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis 
+/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide 
+/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis 
+] def
+%%EndResource
+% Initialize page description variables.
+/sh 595 def
+/sw 842 def
+/llx 24 def
+/urx 818 def
+/ury 571 def
+/lly 24 def
+/#copies 1 def
+/th 15.000000 def
+/fnfs 11 def
+/bfs 8.005733 def
+/cw 4.803440 def
+
+% Dictionary for ISO-8859-1 support
+/iso1dict 8 dict begin
+  /fCourier ISO-8859-1Encoding /Courier reencode_font
+  /fCourier-Bold ISO-8859-1Encoding /Courier-Bold reencode_font
+  /fCourier-BoldOblique ISO-8859-1Encoding /Courier-BoldOblique reencode_font
+  /fCourier-Oblique ISO-8859-1Encoding /Courier-Oblique reencode_font
+  /fHelvetica ISO-8859-1Encoding /Helvetica reencode_font
+  /fHelvetica-Bold ISO-8859-1Encoding /Helvetica-Bold reencode_font
+  /fTimes-Bold ISO-8859-1Encoding /Times-Bold reencode_font
+  /fTimes-Roman ISO-8859-1Encoding /Times-Roman reencode_font
+currentdict end def
+/bgcolor [ 0 0 0 ] def
+/bg false def
+/ul false def
+/bx false def
+% The font for line numbering
+/f# /Helvetica findfont bfs .6 mul scalefont def
+/fSymbol /Symbol findfont def
+/hm fnfs 0.25 mul def
+/pw
+   cw 81.400000 mul
+def
+/ph
+   501.959430 th add
+def
+/pmw urx llx sub pw 2 mul sub 1 div def
+/pmh 0 def
+/v 0 def
+/x [
+  0
+  dup pmw add pw add
+] def
+/y [
+  pmh ph add 0 mul ph add
+  dup
+] def
+/scx sw 2 div def
+/scy sh 2 div def
+/snx urx def
+/sny lly 2 add def
+/dx llx def
+/dy sny def
+/fnx scx def
+/fny dy def
+/lx snx def
+/ly ury fnfs 0.8 mul sub def
+/sx 0 def
+/tab 8 def
+/x0 0 def
+/y0 0 def
+%%EndSetup
+
+%%Page: (1-2) 1
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(#!/bin/env python3.8) c n
+() p n
+(""") N
+(Allister Liu) str n
+(""") p n
+() N
+(import) K
+( sys) p n
+() N
+(import) K
+( matplotlib.pyplot as plt) p n
+(import) K
+( numpy as np) p n
+(import) K
+( tensorflow as tf) p n
+() N
+(from) K
+( absl ) p
+(import) K
+( flags) p n
+(from) K
+( tqdm ) p
+(import) K
+( trange) p n
+() N
+(FLAGS = flags.FLAGS) N
+(flags.DEFINE_integer\(") S
+(sample_size) str
+(", 1000, ") p
+(Number of samples in dataset) str
+("\)) p n
+(flags.DEFINE_integer\(") S
+(batch_size) str
+(", 32, ") p
+(Number of samples in batch) str
+("\)) p n
+(flags.DEFINE_integer\(") S
+(num_iters) str
+(", 300, ") p
+(Number of SGD iterations) str
+("\)) p n
+() N
+() N
+(def) K
+( get_spirals\(size=500\):) p n
+(    """) N
+(    Generate the two spirals with noise with sample size n) str n
+(    :return: \(x1, y1\) => spiral 1 & \(x2, y2\) => spiral 2) N
+() N
+(    # https://www.engineerknow.com/2021/02/spiral-graph-plotting-in-python.html) N
+(    ) S
+(""") p n
+() N
+(    r = np.linspace\(1, 15, size, dtype=") S
+(float32) str
+("\)) p n
+(    t_1 = np.linspace\(0, 12, size\)) N
+(    t_2 = np.linspace\(3, 15, size\)) N
+() N
+(    x_1 = r * np.cos\(t_1\) + np.random.normal\(scale=0.2, size=size\)) N
+(    y_1 = r * np.sin\(t_1\) + np.random.normal\(scale=0.2, size=size\)) N
+(    x_2 = r * np.cos\(t_2\) + np.random.normal\(scale=0.2, size=size\)) N
+(    y_2 = r * np.sin\(t_2\) + np.random.normal\(scale=0.2, size=size\)) N
+() N
+(    ) S
+(return) K
+( x_1, y_1, x_2, y_2) p n
+() N
+() N
+(class) K
+( Data\(object\):) p n
+(    """) N
+(    Generate datas) str n
+(    ) S
+(""") p n
+() N
+(    ) S
+(def) K
+( __init__\(self, sam_size, x_1, y_1, x_2, y_2\):) p n
+(        """) N
+(            Combine the XY coordinates of the spiral datas into one list, and label each data point with its) str n
+(        corresponding class [0,1]) N
+(            :param sam_size: sample size) N
+(            :param x_1: x coordinates of spiral 1) N
+(            :param y_1: y coordinates of spiral 1) N
+(            :param x_2: x coordinates of spiral 2) N
+(            :param y_2: y coordinates of spiral 2) N
+(        ) S
+(""") p n
+(        self.sam_size = sam_size) N
+(        self.index = np.arange\(sam_size\)  ) S
+(# index for get_batch\(\)) c n
+() p n
+(        x_coor = np.concatenate\([x_1, x_2]\)) N
+(        y_coor = np.concatenate\([y_1, y_2]\)) N
+(        xy_coor = np.array\(list\([zip\(x_coor, y_coor\)][0]\)\)) N
+(main.py) (Page 1/4) (Sep 15, 22 1:35) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(        class_labels = np.zeros\(sam_size // 2, dtype=") p
+(float32) str
+("\)) p n
+(        class_labels = np.concatenate\() N
+(            [class_labels, np.ones\(sam_size // 2, dtype=") S
+(float32) str
+("\)]) p n
+(        \)) N
+() N
+(        self.xy_coor = np.float32\(xy_coor\)) N
+(        self.class_labels = np.float32\(class_labels\)) N
+() N
+(    ) S
+(def) K
+( get_batch\(self, batch_size\):) p n
+(        """) N
+(        Get a small batch of the randomly chosen datas) str n
+(        :param batch_size: batch size) N
+(        :return: a small batch of randomly chosen data point coordinates with their corresponding class label) N
+(        ) S
+(""") p n
+(        choices = np.random.choice\(self.index, size=batch_size\)) N
+(        ) S
+(return) K
+( self.xy_coor[choices], self.class_labels[choices].reshape\() p n
+(            \(batch_size, 1\)) N
+(        \)) N
+() N
+() N
+(class) K
+( Model\(tf.Module\):) p n
+(    ) S
+(def) K
+( __init__\(self\):) p n
+(        """) N
+(        Initialize the model with 3 hidden layers:) str n
+(            \(2, 64\) => \(64,32\) => \(32,16\) => \(16,1\)) N
+(        weights are initialized to be a random normal distribution, and biases are initialized to zeros) N
+(        ) S
+(""") p n
+(        w0 = tf.Variable\(tf.random.normal\(shape=\(2, 64\)\), name=") S
+(w0) str
+("\)) p n
+(        w1 = tf.Variable\(tf.random.normal\(shape=\(64, 32\)\), name=") S
+(w1) str
+("\)) p n
+(        w2 = tf.Variable\(tf.random.normal\(shape=\(32, 16\)\), name=") S
+(w2) str
+("\)) p n
+(        w3 = tf.Variable\(tf.random.normal\(shape=\(16, 1\)\), name=") S
+(w3) str
+("\)) p n
+(        ) S
+(# w4 = tf.Variable\(tf.random.normal\(shape=\(8, 1\)\), name="w4"\)) c n
+(        self.weights = [w0, w1, w2, w3]) p n
+() N
+(        b0 = tf.Variable\(tf.zeros\(64\), name=") S
+(b0) str
+("\)) p n
+(        b1 = tf.Variable\(tf.zeros\(32\), name=") S
+(b1) str
+("\)) p n
+(        b2 = tf.Variable\(tf.zeros\(16\), name=") S
+(b2) str
+("\)) p n
+(        b3 = tf.Variable\(tf.zeros\(1\), name=") S
+(b3) str
+("\)) p n
+(        ) S
+(# b4 = tf.Variable\(tf.zeros\(1\), name="b4"\)) c n
+(        self.biases = [b0, b1, b2, b3]) p n
+() N
+(    ) S
+(def) K
+( predict\(self, datas\):) p n
+(        """) N
+(        Calculate y_hat) str n
+(        :param datas: xy coordinates of the given data points) N
+(        :return: y_hat) N
+(        ) S
+(""") p n
+(        ) S
+(for) K
+( i, \(w, b\) ) p
+(in) K
+( enumerate\(zip\(self.weights, self.biases\)\):) p n
+(            ) S
+(if) K
+( i == 0:) p n
+(                self.y_h = datas @ w + b) N
+(            ) S
+(else) K
+(:) p n
+(                self.y_h = tf.nn.elu\(self.y_h\) @ w + b) N
+(        ) S
+(return) K
+( self.y_h) p n
+() N
+(    ) S
+(def) K
+( loss\(self, prediction, target\):) p n
+(        """) N
+(        Calculate loss with L2 penalty) str n
+(        :param prediction: y_hat) N
+(        :param target: y) N
+(        :return: loss with L2 penalty) N
+(        ) S
+(""") p n
+(        y_h = prediction) N
+(main.py) (Page 2/4) (Sep 15, 22 1:35) title
+border
+grestore
+(Printed by Unknown User) rhead
+(./hw2/main.py) (1/2) (Thursday September 15, 2022) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (3-4) 2
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(        y_ = target) p n
+() N
+(        bce = tf.reduce_mean\() N
+(            tf.nn.sigmoid_cross_entropy_with_logits\(logits=y_h, labels=y_\)) N
+(        \)  ) S
+(# binary cross entropy) c n
+(        ) p
+(#                                           bce = -1 * y_ * tf.math.log\() c n
+(y_h\) - \(1 - y_\) * tf.math.log\(1 - y_h\)) N
+() p n
+(        l2 = 0) N
+(        ) S
+(for) K
+( wei ) p
+(in) K
+( model.weights:) p n
+(            l2 += tf.nn.l2_loss\(wei\)) N
+() N
+(        ) S
+(return) K
+( tf.reduce_mean\(bce + 0.01 * l2\)) p n
+() N
+() N
+(if) K
+( __name__ == ") p
+(__main__) str
+(":) p n
+(    ) S
+(# Handle the flags) c n
+(    FLAGS\(sys.argv\)) p n
+(    SAMPLE_SIZE = FLAGS.sample_size) N
+(    BATCH_SIZE = FLAGS.batch_size) N
+(    NUM_ITERS = FLAGS.num_iters) N
+() N
+(    ) S
+(# Generate spirals) c n
+(    x1, y1, x2, y2 = get_spirals\(SAMPLE_SIZE // 2\)) p n
+() N
+(    ) S
+(# Generate data \(coordinates of two noisy spirals with their class label\)) c n
+(    data = Data\(sam_size=SAMPLE_SIZE, x_1=x1, y_1=y1, x_2=x2, y_2=y2\)) p n
+() N
+(    ) S
+(# Initialize model weights and biases) c n
+(    model = Model\(\)) p n
+() N
+(    ) S
+(# Using Adam as optimizer with learning rate of .05) c n
+(    optimizer = tf.optimizers.Adam\(learning_rate=0.05\)) p n
+() N
+(    losses = np.zeros\(NUM_ITERS\)) N
+(    ) S
+(# Train) c n
+(    bar = trange\(NUM_ITERS\)) p n
+(    ) S
+(for) K
+( i ) p
+(in) K
+( bar:) p n
+(        with tf.GradientTape\(\) as tape:) N
+(            ) S
+(# Get batch) c n
+(            x, y = data.get_batch\(BATCH_SIZE\)) p n
+(            ) S
+(# Get prediction y_hat) c n
+(            y_hat = model.predict\(x\)) p n
+(            ) S
+(# Calculate loss) c n
+(            loss = model.loss\(y_hat, y\)) p n
+(            losses[i] = loss) N
+() N
+(        gradients = tape.gradient\(loss, model.variables\)) N
+(        optimizer.apply_gradients\(zip\(gradients, model.variables\)\)) N
+(        bar.set_description\(f") S
+(Loss @ {i} => {loss.numpy\(\):0.6f}) str
+("\)) p n
+(        bar.refresh\(\)) N
+() N
+(    x_truth = data.xy_coor[:, 0]) N
+(    y_truth = data.xy_coor[:, 1]) N
+() N
+(    ) S
+(# Get evenly distributed sample points within the area of interest \(-15 <= x) c n
+( <= 15, -15 <= y <= 15\)) N
+(    ) p
+(# at 0.1 increments) c n
+(    n = 301) p n
+(    x_samp = np.linspace\(-15, 15, n, dtype=") S
+(float32) str
+("\)) p n
+(    y_samp = np.linspace\(-15, 15, n, dtype=") S
+(float32) str
+("\)) p n
+(    \() N
+(main.py) (Page 3/4) (Sep 15, 22 1:35) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(        x_samp_plt,) p n
+(        y_samp_plt,) N
+(    \) = np.meshgrid\(x_samp, y_samp\)) N
+() N
+(    ) S
+(# Get our model's prediction for each sample point) c n
+(    z = np.zeros\(\(n, n\)\)  ) p
+(# decision mesh grid) c n
+(    ) p
+(for) K
+( i ) p
+(in) K
+( range\(n\):) p n
+(        ) S
+(for) K
+( j ) p
+(in) K
+( range\(n\):) p n
+(            p = model.predict\(np.array\([[x_samp[j], y_samp[i]]]\)\)) N
+(            ) S
+(if) K
+( p >= 0.5:) p n
+(                z[i, j] = 1) N
+() N
+(    cm = plt.cm.RdBu  ) S
+(# color map) c n
+() p n
+(    plt.contourf\(x_samp, y_samp, z, cmap=cm, alpha=0.7\)) N
+(    plt.scatter\() N
+(        x_truth, y_truth, c=data.class_labels, cmap=cm, alpha=1, edgecolors=") S
+(blac) str n
+(k) S
+(") p n
+(    \)) N
+(    plt.show\(\)) N
+() N
+(    n, x, _ = plt.hist\(losses\)) N
+(    plt.ylim\(0, 1\)) N
+(    plt.show\(\)) N
+() N
+(""") N
+(After creating my model, I first started experimenting with hidden layer dimensions, and found \(2, 64\) => \(64,32\) => ) str n
+(\(32,16\) => \(16,1\) would give the best prediction. ) N
+(Then I started playing around with the activation functions: starting with ReLU as most people, I figured that for some ) N
+(reason my loss often gets stuck at around 0.7. After trying different activation functions, I found that changing to ELU) N
+(seems to solve this problem.) N
+(Also, for my loss function, I was trying to use the formula discussed in class to implement my own bce function, but ) N
+(since my weights are centered around zero, it often calculates log\(0\), which in turn makes my loss goes to nan. HUGE ) N
+(SHOUT OUT to Thodoris who pointed this out, and suggested that I could either try to add some very small number ) N
+(like e^\(-15\) when taking the log, or I can just use tensorflow's builtin function for bce) N
+(I then tweaked the learning rates for Adam optimizer and the beta factor for L2 penalty, found my satisfied values in) N
+(the end.) N
+(Finally, I figured that 5000 would be a good the number of iterations for training) N
+(""") p n
+(main.py) (Page 4/4) (Sep 15, 22 1:35) title
+border
+grestore
+(Printed by Unknown User) rhead
+(./hw2/main.py) (2/2) (Thursday September 15, 2022) footer
+end % of iso1dict
+pagesave restore
+showpage
+
+%%Trailer
+end
+%%EOF

@@ -1,0 +1,2 @@
+I included the png file of my generated plot just in case, because I figured that after combining it with the codes into
+the PDF file, the generated plot looks kind of blurry.
