@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+import pickle
+import _pickle as cPickle
+import gzip
 
 from absl import flags
 
@@ -25,10 +28,9 @@ flags.DEFINE_integer("random_seed", 31415, "Random seed")
 
 # https://www.cs.toronto.edu/~kriz/cifar.html
 def unpickle(file):
-    import pickle
     with open(file, 'rb') as fo:
-        dic = pickle.load(fo, encoding='bytes')
-    return dic
+        dict = cPickle.load(fo)
+    return dict
 
 
 def import_data(rng):
@@ -39,7 +41,10 @@ def import_data(rng):
     :param rng: random generator
         :return: shuffled data in numpy arrays
     """
-
+    cifar_10_dict = unpickle(f"./cifar-10-python.tar.gz")
+    # cifar_100_dict = unpickle(f"./cifar-100-python.tar.gz")
+    print(cifar_10_dict)
+    # print(cifar_100_dict)
 
 
 def preprocess(train_val_pixels, train_val_labels, test_pixels, test_labels):
