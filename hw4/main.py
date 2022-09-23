@@ -18,7 +18,6 @@ from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Conv2D, MaxPool2D, Dropout, Flatten, Dense
 
 FLAGS = flags.FLAGS
-# flags.DEFINE_integer("sample_size", 1000, "Number of samples in dataset")
 flags.DEFINE_integer("batch_size", 32, "Number of samples in batch")
 flags.DEFINE_integer("num_iters", 500, "Number of epochs")
 flags.DEFINE_integer("random_seed", 31415, "Random seed")
@@ -146,7 +145,6 @@ if __name__ == "__main__":
 
     # Handle the flags
     FLAGS(sys.argv)
-    SAMPLE_SIZE = FLAGS.sample_size
     BATCH_SIZE = FLAGS.batch_size
     NUM_ITERS = FLAGS.num_iters
     RNG_SEED = FLAGS.random_seed
@@ -156,36 +154,36 @@ if __name__ == "__main__":
     tf.random.Generator.from_seed(RNG_SEED)
 
     # import and preprocess data
-    x_train_val, y_train_val, x_test, y_test = import_data(rng=np_rng)
-    train_x, train_y, val_x, val_y, test_x, test_y = preprocess(train_val_pixels=x_train_val,
-                                                                train_val_labels=y_train_val,
-                                                                test_pixels=x_test,
-                                                                test_labels=y_test)
-
-    # train and evaluate model
-    myModel = get_model()
-    print(myModel.summary())
-    hist = myModel.fit(x=train_x, y=train_y, batch_size=BATCH_SIZE, epochs=NUM_ITERS,
-                       validation_data=(val_x, val_y), verbose=1)
-    test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
-
-    print('Test loss\t\t:', test_loss)
-    print('Test accuracy\t:', test_acc)
-
-    # plotting the training accuracy and loss
-    fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
-    axs[0].set_title('Training Accuracy Histogram')
-    axs[0].set_xlabel('Epochs')
-    axs[0].set_ylabel('Accuracy')
-    axs[0].plot(hist.history['accuracy'], label='training accuracy')
-    axs[0].plot(hist.history['val_accuracy'], label='validation accuracy')
-    axs[0].legend(loc='lower right')
-
-    axs[1].set_title('Training Loss Histogram')
-    axs[1].set_xlabel('Epochs')
-    axs[1].set_ylabel('Loss')
-    axs[1].plot(hist.history['loss'], label='training loss')
-    axs[1].plot(hist.history['val_loss'], label='validation loss')
-    axs[1].legend(loc='upper right')
-
-    plt.show()
+    import_data(rng=np_rng)
+    # train_x, train_y, val_x, val_y, test_x, test_y = preprocess(train_val_pixels=x_train_val,
+    #                                                             train_val_labels=y_train_val,
+    #                                                             test_pixels=x_test,
+    #                                                             test_labels=y_test)
+    #
+    # # train and evaluate model
+    # myModel = get_model()
+    # print(myModel.summary())
+    # hist = myModel.fit(x=train_x, y=train_y, batch_size=BATCH_SIZE, epochs=NUM_ITERS,
+    #                    validation_data=(val_x, val_y), verbose=1)
+    # test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
+    #
+    # print('Test loss\t\t:', test_loss)
+    # print('Test accuracy\t:', test_acc)
+    #
+    # # plotting the training accuracy and loss
+    # fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
+    # axs[0].set_title('Training Accuracy Histogram')
+    # axs[0].set_xlabel('Epochs')
+    # axs[0].set_ylabel('Accuracy')
+    # axs[0].plot(hist.history['accuracy'], label='training accuracy')
+    # axs[0].plot(hist.history['val_accuracy'], label='validation accuracy')
+    # axs[0].legend(loc='lower right')
+    #
+    # axs[1].set_title('Training Loss Histogram')
+    # axs[1].set_xlabel('Epochs')
+    # axs[1].set_ylabel('Loss')
+    # axs[1].plot(hist.history['loss'], label='training loss')
+    # axs[1].plot(hist.history['val_loss'], label='validation loss')
+    # axs[1].legend(loc='upper right')
+    #
+    # plt.show()
