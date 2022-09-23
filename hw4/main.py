@@ -12,8 +12,7 @@ import numpy as np
 import tensorflow as tf
 import pandas as pd
 import pickle
-import _pickle as cPickle
-import gzip
+import scipy
 import tarfile
 
 from absl import flags
@@ -37,10 +36,10 @@ def unzip_and_unpickle(file):
     This function takes the name/filepath of a .tar.gz file which contains the desired dataset as input, it unzips and
     iterates through the files
     """
-    train_val_x = []
-    train_val_y = []
-    testing_x = []
-    testing_y = []
+    train_val_pix = []
+    train_val_lbl = []
+    testing_pix = []
+    testing_lbl = []
     # https://stackoverflow.com/questions/37474767/read-tar-gz-file-in-python
     f = tarfile.open(file, 'r:gz', encoding='utf-8')
     for files in f.getmembers():
@@ -49,20 +48,20 @@ def unzip_and_unpickle(file):
             if fp:
                 # https://stackoverflow.com/questions/49045172/cifar10-load-data-takes-long-time-to-download-data
                 dic = pickle.load(fp, encoding='bytes')
-                if not len(train_val_x):
-                    train_val_x, train_val_y = (extract_and_reshape(dic=dic))
+                if not len(train_val_pix):
+                    train_val_pix, train_val_lbl = (extract_and_reshape(dic=dic))
                 else:
-                    train_val_x = np.concatenate((train_val_x, extract_and_reshape(dic=dic)[0]), axis=0)
-                    train_val_y = np.concatenate((train_val_y, extract_and_reshape(dic=dic)[1]), axis=0)
-                print(f"x:\t{train_val_x.shape}\t\t\ty:\t{train_val_y.shape}")
+                    train_val_pix = np.concatenate((train_val_pix, extract_and_reshape(dic=dic)[0]), axis=0)
+                    train_val_lbl = np.concatenate((train_val_lbl, extract_and_reshape(dic=dic)[1]), axis=0)
+                # print(f"x:\t{train_val_pix.shape}\t\t\ty:\t{train_val_lbl.shape}")
         elif files.name.__contains__('test_batch'):
             fp = f.extractfile(files)
             if fp:
                 # https://stackoverflow.com/questions/49045172/cifar10-load-data-takes-long-time-to-download-data
                 dic = pickle.load(fp, encoding='bytes')
-                testing_x, testing_y = extract_and_reshape(dic=dic)
-                print(f"x-test:\t{testing_x.shape}\t\t\ty-test:\t{testing_y.shape}")
-    return train_val_y, train_val_x, testing_y, testing_x
+                testing_pix, testing_lbl = extract_and_reshape(dic=dic)
+                # print(f"x-test:\t{testing_pix.shape}\t\t\ty-test:\t{testing_lbl.shape}")
+    return train_val_pix, train_val_lbl, testing_pix, testing_lbl
 
 
 def import_data(rng):
@@ -74,8 +73,8 @@ def import_data(rng):
         :return: shuffled data in numpy arrays
     """
 
-    x_train_val, y_train_val, x_testing, y_testing = unzip_and_unpickle("./cifar-10-python.tar.gz")
-
+    train_val_pix, train_val_lbl, testing_pix, testing_lbl = unzip_and_unpickle("./cifar-10-python.tar.gz")
+    return train_val_pix, train_val_lbl, testing_pix, testing_lbl
 
 
 def preprocess(train_val_pixels, train_val_labels, test_pixels, test_labels):
@@ -92,35 +91,28 @@ def preprocess(train_val_pixels, train_val_labels, test_pixels, test_labels):
     :param test_labels: label of each image for testing
         :return: (train_x, train_y), (validation_x, validation_y), (test_x, test_y)
     """
+    # print(train_val_pixels.shape)
     # normalize the pixel grayscale value to between 0 and 1 by dividing by 255.
-    train_val_pixels_normalized = train_val_pixels / 255.
-    test_pixels_normalized = test_pixels / 255.
+    epsilon = 1e-10
+    train_val_pixels_mean = np.mean(train_val_pixels, axis=(0, 1, 2, 3))
+    train_val_pixels_std = np.std(train_val_pixels, axis=(0, 1, 2, 3))
 
-    # reshape the 1d array of each image to 2d (784,) => (28, 28)
-    #   suggested by Bob (Sangjoon) Lee
-    train_val_pixels_processed = np.array([np.reshape(xs, (28, 28)) for xs in train_val_pixels_normalized])
-    test_pixels_processed = np.array([np.reshape(xs, (28, 28)) for xs in test_pixels_normalized])
+    test_pixels_mean = np.mean(test_pixels, axis=(0, 1, 2, 3))
+    test_pixels_std = np.std(test_pixels, axis=(0, 1, 2, 3))
 
-    # one-hot encode the class labels
-    # labels_onehot = np.zeros((len(labels), labels.max() + 1))  # labels.max()+1 = number of classes => 10 classes
-    # labels_onehot[np.arange(labels.size), labels] = 1
+    train_val_pixels_normalized = (train_val_pixels - train_val_pixels_mean) / (train_val_pixels_std + epsilon)
+    test_pixels_normalized = (test_pixels - test_pixels_mean) / (test_pixels_std + epsilon)
 
     # split the data => 80% train + 20% validation
     train_range = range(0, int(0.8 * len(train_val_labels)))
     val_range = range(int(0.8 * len(train_val_labels)), len(train_val_labels))
 
-    train_pix_arr = train_val_pixels_processed[train_range]     # shape=(48000, 28, 28)
+    train_pix_arr = train_val_pixels_normalized[train_range]     # shape=(48000, 28, 28)
     train_lbl_arr = train_val_labels[train_range]               # shape=(48000, 1)
-    val_pix_arr = train_val_pixels_processed[val_range]         # shape=(12000 , 28, 28)
+    val_pix_arr = train_val_pixels_normalized[val_range]         # shape=(12000 , 28, 28)
     val_lbl_arr = train_val_labels[val_range]                   # shape=(12000 , 1)
-    test_pix_arr = test_pixels_processed                        # shape=(10000 , 28, 28)
+    test_pix_arr = test_pixels_normalized                        # shape=(10000 , 28, 28)
     test_lbl_arr = test_labels                                  # shape=(10000 , 1)
-
-    # add an additional channel for grayscale value of the images
-    #   https://medium.com/@nutanbhogendrasharma/tensorflow-build-custom-convolutional-neural-network-with-mnist-dataset-d4c36cd52114
-    train_pix_arr = train_pix_arr[..., tf.newaxis].astype('float32')    # shape=(48000, 28, 28, 1)
-    val_pix_arr = val_pix_arr[..., tf.newaxis].astype('float32')        # shape=(12000 , 28, 28, 1)
-    test_pix_arr = test_pix_arr[..., tf.newaxis].astype('float32')      # shape=(10000 , 28, 28, 1)
 
     return train_pix_arr, train_lbl_arr, val_pix_arr, val_lbl_arr, test_pix_arr, test_lbl_arr
 
@@ -190,11 +182,12 @@ if __name__ == "__main__":
     tf.random.Generator.from_seed(RNG_SEED)
 
     # import and preprocess data
-    import_data(rng=np_rng)
-    # train_x, train_y, val_x, val_y, test_x, test_y = preprocess(train_val_pixels=x_train_val,
-    #                                                             train_val_labels=y_train_val,
-    #                                                             test_pixels=x_test,
-    #                                                             test_labels=y_test)
+    x_train_val, y_train_val, x_test, y_test = import_data(rng=np_rng)
+    train_x, train_y, val_x, val_y, test_x, test_y = preprocess(train_val_pixels=x_train_val,
+                                                                train_val_labels=y_train_val,
+                                                                test_pixels=x_test,
+                                                                test_labels=y_test)
+    # print(test_x)
     #
     # # train and evaluate model
     # myModel = get_model()
