@@ -27,23 +27,42 @@ flags.DEFINE_integer("num_iters", 500, "Number of epochs")
 flags.DEFINE_integer("random_seed", 31415, "Random seed")
 
 
+def extract_and_reshape(dic):
+    return dic[b'data'].reshape((len(dic[b'data']), 3, 32, 32)).transpose(0, 2, 3, 1).astype('float32'), \
+           np.array(dic[b'labels'])
+
+
 def unzip_and_unpickle(file):
     """
     This function takes the name/filepath of a .tar.gz file which contains the desired dataset as input, it unzips and
     iterates through the files
     """
-    # train_val_x, train_val_y, testing_x, testing_y = []
+    train_val_x = []
+    train_val_y = []
+    testing_x = []
+    testing_y = []
     # https://stackoverflow.com/questions/37474767/read-tar-gz-file-in-python
     f = tarfile.open(file, 'r:gz', encoding='utf-8')
     for files in f.getmembers():
-        if files.name.__contains__("_batch_"):
+        if files.name.__contains__('_batch_'):
             fp = f.extractfile(files)
             if fp:
                 # https://stackoverflow.com/questions/49045172/cifar10-load-data-takes-long-time-to-download-data
                 dic = pickle.load(fp, encoding='bytes')
-                print(dic[b'data'].shape)
-                print(dic[b'data'].reshape((len(dic[b'data']), 3, 32, 32)).transpose(0, 2, 3, 1).astype('float32').shape)
-
+                if not len(train_val_x):
+                    train_val_x, train_val_y = (extract_and_reshape(dic=dic))
+                else:
+                    train_val_x = np.concatenate((train_val_x, extract_and_reshape(dic=dic)[0]), axis=0)
+                    train_val_y = np.concatenate((train_val_y, extract_and_reshape(dic=dic)[1]), axis=0)
+                print(f"x:\t{train_val_x.shape}\t\t\ty:\t{train_val_y.shape}")
+        elif files.name.__contains__('test_batch'):
+            fp = f.extractfile(files)
+            if fp:
+                # https://stackoverflow.com/questions/49045172/cifar10-load-data-takes-long-time-to-download-data
+                dic = pickle.load(fp, encoding='bytes')
+                testing_x, testing_y = extract_and_reshape(dic=dic)
+                print(f"x-test:\t{testing_x.shape}\t\t\ty-test:\t{testing_y.shape}")
+    return train_val_y, train_val_x, testing_y, testing_x
 
 
 def import_data(rng):
@@ -54,18 +73,9 @@ def import_data(rng):
     :param rng: random generator
         :return: shuffled data in numpy arrays
     """
-    cifar_10_list = []
-    # with gzip.open("./cifar-10-python.tar.gz", 'rb') as f:
-    #     print(f)
-    #     cifar_10_list.append(unpickle(f))
 
-    unzip_and_unpickle("./cifar-10-python.tar.gz")
-    # unpickle("./data_batch_1")
+    x_train_val, y_train_val, x_testing, y_testing = unzip_and_unpickle("./cifar-10-python.tar.gz")
 
-    # cifar_10_dict = unpickle(f"./cifar-10-python.tar.gz")
-    # cifar_100_dict = unpickle(f"./cifar-100-python.tar.gz")
-    print(cifar_10_list)
-    # print(cifar_100_dict)
 
 
 def preprocess(train_val_pixels, train_val_labels, test_pixels, test_labels):
