@@ -155,7 +155,8 @@ def get_model():
 if __name__ == "__main__":
     # There is some mismatch version issues with my installed CuDNN and CUDA Toolkit, so I decided not to run on
     # CPU only and disable GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    print(tf.config.list_physical_devices('GPU'))
 
     # Handle the flags
     FLAGS(sys.argv)
