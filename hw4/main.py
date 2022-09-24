@@ -19,6 +19,7 @@ from absl import flags
 
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Conv2D, MaxPool2D, Dropout, Flatten, Dense
+from keras.layers import BatchNormalization, RandomFlip, RandomRotation
 
 FLAGS = flags.FLAGS
 flags.DEFINE_integer("batch_size", 32, "Number of samples in batch")
@@ -151,23 +152,40 @@ def get_model():
     # modified from:
     # https://medium.com/@nutanbhogendrasharma/tensorflow-build-custom-convolutional-neural-network-with-mnist-dataset-d4c36cd52114
     model = Sequential()
-    model.add(Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1),
+    model.add(Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(32, 32, 3), strides=1,
+                     padding='same', kernel_regularizer=tf.keras.regularizers.l2(l2=.00001)))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=32, kernel_size=(3, 3), activation='relu', strides=1, padding='same',
                      kernel_regularizer=tf.keras.regularizers.l2(l2=.00001)))
+    model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2, 2)))
-    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu',
-                     kernel_regularizer=tf.keras.regularizers.l2(.00001)))
-    model.add(Dropout(.25))
+    model.add(Dropout(0.2))
+
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', strides=1, padding='same',
+                     kernel_regularizer=tf.keras.regularizers.l2(l2=.00001)))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu', strides=1, padding='same',
+                     kernel_regularizer=tf.keras.regularizers.l2(l2=.00001)))
+    model.add(BatchNormalization())
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Dropout(0.3))
+
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                     kernel_regularizer=tf.keras.regularizers.l2(l2=.00001)))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=128, kernel_size=(3, 3), activation='relu', padding='same',
+                     kernel_regularizer=tf.keras.regularizers.l2(l2=.00001)))
+    model.add(BatchNormalization())
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Dropout(0.4))
+
     model.add(Flatten())
-    model.add(Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(.00001)))
-    model.add(Dropout(.5))
     model.add(Dense(10, activation='softmax'))
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 
 if __name__ == "__main__":
-    # There is some mismatch version issues with my installed CuDNN and CUDA Toolkit, so I decided not to run on
-    # CPU only and disable GPU
     # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     print(tf.config.list_physical_devices('GPU'))
 
@@ -187,32 +205,31 @@ if __name__ == "__main__":
                                                                 train_val_labels=y_train_val,
                                                                 test_pixels=x_test,
                                                                 test_labels=y_test)
-    # print(test_x)
+
+    # train and evaluate model
+    myModel = get_model()
+    print(myModel.summary())
+
+    hist = myModel.fit(x=train_x, y=train_y, batch_size=BATCH_SIZE, epochs=NUM_ITERS,
+                       steps_per_epoch=(train_x.shape[0] // BATCH_SIZE), validation_data=(val_x, val_y), verbose=1)
+    test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
+    print('Test loss\t\t:', test_loss)
+    print('Test accuracy\t:', test_acc)
+
+    # plotting the training accuracy and loss
+    fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
+    axs[0].set_title('Training Accuracy Histogram')
+    axs[0].set_xlabel('Epochs')
+    axs[0].set_ylabel('Accuracy')
+    axs[0].plot(hist.history['accuracy'], label='training accuracy')
+    axs[0].plot(hist.history['val_accuracy'], label='validation accuracy')
+    axs[0].legend(loc='lower right')
+
+    axs[1].set_title('Training Loss Histogram')
+    axs[1].set_xlabel('Epochs')
+    axs[1].set_ylabel('Loss')
+    axs[1].plot(hist.history['loss'], label='training loss')
+    axs[1].plot(hist.history['val_loss'], label='validation loss')
+    axs[1].legend(loc='upper right')
     #
-    # # train and evaluate model
-    # myModel = get_model()
-    # print(myModel.summary())
-    # hist = myModel.fit(x=train_x, y=train_y, batch_size=BATCH_SIZE, epochs=NUM_ITERS,
-    #                    validation_data=(val_x, val_y), verbose=1)
-    # test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
-    #
-    # print('Test loss\t\t:', test_loss)
-    # print('Test accuracy\t:', test_acc)
-    #
-    # # plotting the training accuracy and loss
-    # fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
-    # axs[0].set_title('Training Accuracy Histogram')
-    # axs[0].set_xlabel('Epochs')
-    # axs[0].set_ylabel('Accuracy')
-    # axs[0].plot(hist.history['accuracy'], label='training accuracy')
-    # axs[0].plot(hist.history['val_accuracy'], label='validation accuracy')
-    # axs[0].legend(loc='lower right')
-    #
-    # axs[1].set_title('Training Loss Histogram')
-    # axs[1].set_xlabel('Epochs')
-    # axs[1].set_ylabel('Loss')
-    # axs[1].plot(hist.history['loss'], label='training loss')
-    # axs[1].plot(hist.history['val_loss'], label='validation loss')
-    # axs[1].legend(loc='upper right')
-    #
-    # plt.show()
+    plt.show()
