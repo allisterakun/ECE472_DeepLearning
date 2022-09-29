@@ -6,6 +6,7 @@ Allister Liu
 
 import sys
 
+import absl.logging
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -233,6 +234,8 @@ def learning_rate_scheduler(epoch):
 if __name__ == "__main__":
     # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     print(tf.config.list_physical_devices('GPU'))
+    # https://stackoverflow.com/questions/65697623/tensorflow-warning-found-untraced-functions-such-as-lstm-cell-6-layer-call-and
+    absl.logging.set_verbosity(absl.logging.ERROR)  # used to ignore warning when saving custom model
 
     # Handle the flags
     FLAGS(sys.argv)
@@ -245,71 +248,61 @@ if __name__ == "__main__":
                                                                 train_val_labels=y_train_val,
                                                                 test_pixels=x_test,
                                                                 test_labels=y_test)
-    # data augmentation method modified from blog
-    # https://appliedmachinelearning.wordpress.com/2018/03/24/achieving-90-accuracy-in-object-recognition-task-on-cifar-10-dataset-with-keras-convolutional-neural-networks/
+    # data augmentation method modified from
+    # https://www.tensorflow.org/api_docs/python/tf/keras/preprocessing/image/ImageDataGenerator
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-        featurewise_center=False,
-        samplewise_center=False,
-        featurewise_std_normalization=False,
-        samplewise_std_normalization=False,
-        zca_whitening=False,
-        zca_epsilon=1e-06,
-        rotation_range=15,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        brightness_range=None,
-        shear_range=0.0,
-        zoom_range=0.0,
-        channel_shift_range=0.0,
-        fill_mode='nearest',
-        cval=0.0,
-        horizontal_flip=True,
-        vertical_flip=False,
-        rescale=None,
-        preprocessing_function=None,
-        data_format=None,
-        validation_split=0.0,
-        dtype=None
+        featurewise_center=False, samplewise_center=False, featurewise_std_normalization=False,
+        samplewise_std_normalization=False, zca_whitening=False,
+        zca_epsilon=1e-06, rotation_range=15, width_shift_range=0.1, height_shift_range=0.1,
+        brightness_range=None, shear_range=0.0, zoom_range=0.0, channel_shift_range=0.0,
+        fill_mode='nearest', cval=0.0,
+        horizontal_flip=True, vertical_flip=False,
+        rescale=None, preprocessing_function=None, data_format=None, validation_split=0.0, dtype=None
     )
 
     # train and evaluate model
     myModel = get_model(height=32, width=32, depth=3, num_classes=10)
     myModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    # export model structure and architecture
     print(myModel.summary())
+    with open('./model/model_summary.txt', 'w') as f:
+        myModel.summary(print_fn=lambda x: f.write(x + '\n'))
+    # https://www.tensorflow.org/api_docs/python/tf/keras/utils/plot_model
     tf.keras.utils.plot_model(
-        myModel,
-        to_file='model.png',
-        show_shapes=True,
-        show_dtype=False,
-        show_layer_names=True,
-        rankdir='LR',
-        expand_nested=False,
-        dpi=200,
-        layer_range=None,
-        show_layer_activations=True
+        myModel, to_file='./model/model_architecture.png',
+        show_shapes=True, show_dtype=False, show_layer_names=True,
+        rankdir='TB', expand_nested=False, dpi=200, layer_range=None, show_layer_activations=True
     )
 
-    # hist = myModel.fit_generator(datagen.flow(train_x, train_y, batch_size=BATCH_SIZE), epochs=NUM_ITERS,
-    #                              steps_per_epoch=(train_x.shape[0] // BATCH_SIZE), validation_data=(val_x, val_y),
-    #                              verbose=1, callbacks=[LearningRateScheduler(learning_rate_scheduler)])
-    # test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
-    # print('Test loss\t\t:', test_loss)
-    # print('Test accuracy\t:', test_acc)
-    #
-    # # plotting the training accuracy and loss
-    # fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
-    # axs[0].set_title('Training Accuracy Histogram')
-    # axs[0].set_xlabel('Epochs')
-    # axs[0].set_ylabel('Accuracy')
-    # axs[0].plot(hist.history['accuracy'], label='training accuracy')
-    # axs[0].plot(hist.history['val_accuracy'], label='validation accuracy')
-    # axs[0].legend(loc='lower right')
-    #
-    # axs[1].set_title('Training Loss Histogram')
-    # axs[1].set_xlabel('Epochs')
-    # axs[1].set_ylabel('Loss')
-    # axs[1].plot(hist.history['loss'], label='training loss')
-    # axs[1].plot(hist.history['val_loss'], label='validation loss')
-    # axs[1].legend(loc='upper right')
-    #
-    # plt.show()
+    # model checkpoint and log
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath='./model/checkpoint/cifar10/{epoch}', monitor='val_loss',
+        save_best_only=True, verbose=1
+    )
+
+    hist = myModel.fit_generator(datagen.flow(train_x, train_y, batch_size=BATCH_SIZE), epochs=NUM_ITERS,
+                                 steps_per_epoch=(train_x.shape[0] // BATCH_SIZE), validation_data=(val_x, val_y),
+                                 verbose=1, callbacks=[LearningRateScheduler(learning_rate_scheduler),
+                                                       model_checkpoint_callback])
+    test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
+    print('Test loss\t\t:', test_loss)
+    print('Test accuracy\t:', test_acc)
+
+    # plotting the training accuracy and loss
+    fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
+    axs[0].set_title('Training Accuracy Histogram')
+    axs[0].set_xlabel('Epochs')
+    axs[0].set_ylabel('Accuracy')
+    axs[0].plot(hist.history['accuracy'], label='training accuracy')
+    axs[0].plot(hist.history['val_accuracy'], label='validation accuracy')
+    axs[0].legend(loc='lower right')
+
+    axs[1].set_title('Training Loss Histogram')
+    axs[1].set_xlabel('Epochs')
+    axs[1].set_ylabel('Loss')
+    axs[1].plot(hist.history['loss'], label='training loss')
+    axs[1].plot(hist.history['val_loss'], label='validation loss')
+    axs[1].legend(loc='upper right')
+
+    plt.show()

@@ -189,3 +189,7 @@ fabric.properties
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/vcs.xml
 /.idea
+
+/hw4/model/checkpoint
+/hw4/model/checkpoint/
+/hw4/model/checkpoint/*
