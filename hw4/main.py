@@ -3,7 +3,7 @@
 """
 Allister Liu
 """
-
+import os.path
 import sys
 
 import absl.logging
@@ -14,9 +14,11 @@ import tensorflow as tf
 import pickle
 import tarfile
 import pydot
+import functools
 
 from absl import flags
 import keras.layers
+import keras.metrics
 from keras.callbacks import LearningRateScheduler
 from keras.layers import BatchNormalization, RandomFlip, RandomRotation, Activation, concatenate, AveragePooling2D
 from keras.layers import Conv2D, MaxPool2D, Dropout, Flatten, Dense
@@ -24,7 +26,12 @@ from keras.layers import Conv2D, MaxPool2D, Dropout, Flatten, Dense
 FLAGS = flags.FLAGS
 flags.DEFINE_integer("batch_size", 64, "Number of samples in batch")
 flags.DEFINE_integer("num_iters", 50, "Number of epochs")
+flags.DEFINE_integer("cifar", 10, "Which CIFAR dataset to use")
 
+"""
+CIFAR-10  test accuracy: 0.9314
+CIFAR-100 test accuracy: 0.8964"
+"""
 
 def extract_and_reshape(dic):
     """
@@ -36,7 +43,7 @@ def extract_and_reshape(dic):
         :return: reshaped data array and label array
     """
     return dic[b'data'].reshape((len(dic[b'data']), 3, 32, 32)).transpose(0, 2, 3, 1).astype('float32'), \
-           np.array(dic[b'labels'])
+           np.array(dic[b'fine_labels'])
 
 
 def unzip_and_unpickle(file):
@@ -55,17 +62,18 @@ def unzip_and_unpickle(file):
     # https://stackoverflow.com/questions/37474767/read-tar-gz-file-in-python
     f = tarfile.open(file, 'r:gz', encoding='utf-8')
     for files in f.getmembers():
-        if files.name.__contains__('_batch_'):
+        if files.name.__contains__('_batch_') or files.name.__contains__('train'):
             fp = f.extractfile(files)
             if fp:
                 # https://stackoverflow.com/questions/49045172/cifar10-load-data-takes-long-time-to-download-data
                 dic = pickle.load(fp, encoding='bytes')
+                # print(dic)
                 if not len(train_val_pix):
                     train_val_pix, train_val_lbl = (extract_and_reshape(dic=dic))
                 else:
                     train_val_pix = np.concatenate((train_val_pix, extract_and_reshape(dic=dic)[0]), axis=0)
                     train_val_lbl = np.concatenate((train_val_lbl, extract_and_reshape(dic=dic)[1]), axis=0)
-        elif files.name.__contains__('test_batch'):
+        elif files.name.__contains__('test'):
             fp = f.extractfile(files)
             if fp:
                 # https://stackoverflow.com/questions/49045172/cifar10-load-data-takes-long-time-to-download-data
@@ -166,7 +174,7 @@ def downsample_module(inputs, num_filters, channel_dim):
     ==> 3x3 MaxPool ==> |
     --------------------------------------------------------
     :param inputs: input data
-    :param num_filters: number of filters]
+    :param num_filters: number of filters
     :param channel_dim: channel dimension
         :return: Downsample Module
     """
@@ -241,9 +249,10 @@ if __name__ == "__main__":
     FLAGS(sys.argv)
     BATCH_SIZE = FLAGS.batch_size
     NUM_ITERS = FLAGS.num_iters
+    CIFAR = FLAGS.cifar
 
     # import and preprocess data
-    x_train_val, y_train_val, x_test, y_test = unzip_and_unpickle(file="./cifar-10-python.tar.gz")
+    x_train_val, y_train_val, x_test, y_test = unzip_and_unpickle(file="./cifar-" + str(CIFAR) + "-python.tar.gz")
     train_x, train_y, val_x, val_y, test_x, test_y = preprocess(train_val_pixels=x_train_val,
                                                                 train_val_labels=y_train_val,
                                                                 test_pixels=x_test,
@@ -261,10 +270,21 @@ if __name__ == "__main__":
     )
 
     # train and evaluate model
-    myModel = get_model(height=32, width=32, depth=3, num_classes=10)
-    myModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    myModel = get_model(height=32, width=32, depth=3, num_classes=CIFAR)
+    if CIFAR == 10:
+        myModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    elif CIFAR == 100:
+        top5_acc = functools.partial(keras.metrics.sparse_top_k_categorical_accuracy, k=5)
+        top5_acc.__name__ = 'top5_acc'
+        myModel.compile(loss='sparse_categorical_crossentropy', optimizer='adam',
+                        metrics=['accuracy', 'sparse_top_k_categorical_accuracy', top5_acc])
 
     # export model structure and architecture
+    if not os.path.exists('./model/'):
+        os.makedirs("./model/")
+    if not os.path.exists('./model/checkpoint/cifar' + str(CIFAR) + '/'):
+        os.makedirs('./model/checkpoint/cifar' + str(CIFAR) + '/')
+
     print(myModel.summary())
     with open('./model/model_summary.txt', 'w') as f:
         myModel.summary(print_fn=lambda x: f.write(x + '\n'))
@@ -277,7 +297,7 @@ if __name__ == "__main__":
 
     # model checkpoint and log
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath='./model/checkpoint/cifar10/{epoch}', monitor='val_loss',
+        filepath='./model/checkpoint/cifar' + str(CIFAR) + '/{epoch}', monitor='val_loss',
         save_best_only=True, verbose=1
     )
 
@@ -285,9 +305,24 @@ if __name__ == "__main__":
                                  steps_per_epoch=(train_x.shape[0] // BATCH_SIZE), validation_data=(val_x, val_y),
                                  verbose=1, callbacks=[LearningRateScheduler(learning_rate_scheduler),
                                                        model_checkpoint_callback])
+
+    # evaluate model performance:
+    # if CIFAR == 10:
     test_loss, test_acc = myModel.evaluate(x=test_x, y=test_y, verbose=1)
     print('Test loss\t\t:', test_loss)
     print('Test accuracy\t:', test_acc)
+
+    # elif CIFAR == 100:
+    #     prediction = myModel.predict(test_x)
+    #     top5 = tf.math.top_k(test_y, prediction, k=5)
+    #
+    #     tot = 0
+    #     for i in range(len(top5)):
+    #         if top5[i] == True:
+    #             tot += 1
+    #
+    #     top5_acc = tot / len(top5)
+    #     print('Top 5 accuracy:\t', top5_acc)
 
     # plotting the training accuracy and loss
     fig, axs = plt.subplots(2, 1, figsize=(10, 12), dpi=200)
@@ -306,4 +341,3 @@ if __name__ == "__main__":
     axs[1].legend(loc='upper right')
 
     plt.show()
-
